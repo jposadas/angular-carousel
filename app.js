@@ -21,32 +21,24 @@ app.config(['$stateProvider', '$urlRouterProvider', function($stateProvider, $ur
 			controller: 'questionCtrl'
 		})
 		.state('submit', {
-			url: '/submit',
+			url: '/submit:data',
 			templateUrl: 'submit.html',
 			controller: 'submitCtrl'
 		});
 
 }]);
 
-app.controller('questionnaireCtrl', ['$scope', '$state', '$timeout', function($scope, $state, $timeout) {
+app.controller('questionnaireCtrl', ['$scope', '$state', 'submitData', function($scope, $state, submitData) {
 
-	var numQuestions = parseInt(document.getElementById('body').getAttribute('data-num-questions'));
+	var numQuestions = parseInt(document.getElementById('header').getAttribute('data-num-questions'));
 	console.log('Number of questions: ' + numQuestions);
 
-	$scope.data = [];
 	$scope.$on('questionAnswered', function(event, args) {
 
-		var index = lookup($scope.data, args.questionID);
-		var obj = {questionID: args.questionID, answer: args.answer};
+		submitData.pushData(args.questionID, args.answer);
+		
 		var order = parseInt(args.order);
-
-		if (index < 0) {
-			$scope.data.push(obj);
-		} else {
-			$scope.data[index] = obj;
-		}
-
-		if (order < numQuestions) {
+		if (order < numQuestions && submitData.length() < numQuestions) {
 			$state.go('q' + (order + 1));
 		} else {
 			$state.go('submit');
@@ -55,26 +47,43 @@ app.controller('questionnaireCtrl', ['$scope', '$state', '$timeout', function($s
 	});
 }]);
 
-app.controller('questionCtrl', ['$rootScope' ,'$scope', '$state', function($scope, $rootScope, $state) {
+app.controller('questionCtrl', ['$scope', '$rootScope', 'submitData', function($scope, $rootScope, submitData) {
 
 	var elem = document.getElementById('currentQuestion');
 	var questionID = elem.getAttribute('data-question-id');
 	var questionOrder = elem.getAttribute('data-question-order');
 	
+	$scope.questionID = questionID;
+	$scope.answer = submitData.getValue(questionID);
 	$scope.submit = function(answer) {
-		$rootScope.$emit('questionAnswered', {questionID: questionID, answer: answer, order: questionOrder});
+		console.log('trying to submit ' + answer);
+		$rootScope.$broadcast('questionAnswered', {questionID: questionID, answer: answer, order: questionOrder});
 	};
 }]);
 
-app.controller('submitCtrl', ['$scope', function($scope) {
+app.controller('submitCtrl', ['$scope', '$window', 'submitData', function($scope, $window, submitData) {
+	$scope.data = submitData.getData();
 
+	$scope.submit = function() {
+		$window.alert('Preferences submitted');
+	};
 }]);
 
-var lookup = function(arr, elem) {
-
-	for(var i = 0; i < arr.length; i++) {
-		if(arr[i].questionID === elem) return i;
-	}
-	return -1;
-
-};
+app.factory('submitData', function() {
+	var data = {};
+	return {
+		getData: function() {
+			return data;
+		},
+		getValue: function(key) {
+			return data[key];
+		},
+		length: function() {
+			return Object.keys(data).length;
+		},
+		pushData: function(key, value) {
+			data[key] = value;
+			console.log(data);
+		}
+	};
+});

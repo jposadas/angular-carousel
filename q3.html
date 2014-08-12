@@ -3,7 +3,7 @@
 	<div class="container">
 		<div class="row">
 			<div class="col-sm-12">
-				<p class="text-center lead">Question 3</p>
+				<p class="text-center lead">Question 3 | {{questionID}}</p>
 			</div>
 		</div>
 		<hr />
@@ -24,7 +24,7 @@
 				<input type="radio" ng-model="answer" ng-change="submit(answer)" value="option3" />
 			</div>
 			<div class="col-sm-1">
-				<a class="btn btn-large btn-default" disabled>Prev</a>
+				<a ui-sref="q1" class="btn btn-large btn-default">Next</a>
 			</div>
 		</div>
 	</div>
